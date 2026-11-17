@@ -1,0 +1,9 @@
+Package: com.mock.entitlementhooks
+Name: MockEntitlementHooks
+Version: 0.1.0
+Architecture: iphoneos-arm64
+Description: Observes the RevenueCat customer-info delegate callback in the target app.
+Maintainer: local
+Author: local
+Section: Tweaks
+Depends: mobilesubstrate
