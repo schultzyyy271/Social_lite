@@ -25,6 +25,10 @@ jobs:
       - name: Cache Theos SDK
         id: cache-sdk
         uses: actions/cache@v4
+        with:
+          path: theos/sdks
+          key: ios-sdk-${{ runner.os }}-16.5
+
       - name: Download iOS SDK
         if: steps.cache-sdk.outputs.cache-hit != 'true'
         run: |
