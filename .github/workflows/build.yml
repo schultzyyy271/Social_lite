@@ -1,0 +1,67 @@
+name: Build Dylib
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Theos
+        uses: actions/checkout@v4
+        with:
+          repository: theos/theos
+          path: theos
+          submodules: recursive
+
+      - name: Cache Theos SDK
+        id: cache-sdk
+        uses: actions/cache@v4
+        with:
+          path: theos/sdks
+          key: ios-sdk-16.5-${{ runner.os }}
+
+      - name: Download iOS SDK
+        if: steps.cache-sdk.outputs.cache-hit != 'true'
+        run: |
+          curl -L -o sdks.zip https://github.com/theos/sdks/archive/refs/heads/master.zip
+          unzip -q sdks.zip
+          mkdir -p theos/sdks
+          cp -a sdks-master/*.sdk theos/sdks/
+
+      - name: Setup toolchain
+        run: brew install ldid make
+
+      - name: Build
+        env:
+          THEOS: ${{ github.workspace }}/theos
+        run: |
+          export PATH="$(brew --prefix make)/libexec/gnubin:$PATH"
+          make clean
+          make FINALPACKAGE=1
+
+      - name: Stage dylib
+        run: |
+          set -euo pipefail
+          mkdir -p output
+          dylib="$(find .theos -type f -name 'MockEntitlementHooks.dylib' -print -quit)"
+          if [ -z "$dylib" ]; then
+            echo "Built dylib not found"
+            find .theos -type f -maxdepth 5 -print
+            exit 1
+          fi
+          cp "$dylib" output/MockEntitlementHooks.dylib
+
+      - name: Upload dylib
+        uses: actions/upload-artifact@v4
+        with:
+          name: MockEntitlementHooks.dylib
+          path: output/MockEntitlementHooks.dylib
