@@ -25,17 +25,13 @@ jobs:
       - name: Cache Theos SDK
         id: cache-sdk
         uses: actions/cache@v4
-        with:
-          path: theos/sdks
-          key: ios-sdk-16.5-${{ runner.os }}
-
       - name: Download iOS SDK
         if: steps.cache-sdk.outputs.cache-hit != 'true'
         run: |
-          curl -L -o sdks.zip https://github.com/theos/sdks/archive/refs/heads/master.zip
-          unzip -q sdks.zip
+          git clone --depth 1 https://github.com/theos/sdks.git sdk-source
           mkdir -p theos/sdks
-          cp -a sdks-master/*.sdk theos/sdks/
+          cp -R sdk-source/*.sdk theos/sdks/
+          test -n "$(find theos/sdks -maxdepth 1 -name '*.sdk' -print -quit)"
 
       - name: Setup toolchain
         run: brew install ldid make
